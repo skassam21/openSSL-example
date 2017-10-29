@@ -1,3 +1,10 @@
+/* A SSL client that asks a question the server and receives the answer
+   from the server
+
+   Author: Shums Kassam
+   Sources: http://www.linuxjournal.com/article/4822
+*/
+
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
@@ -15,13 +22,12 @@
 #define HOST "localhost"
 #define PORT 8765
 
-/* use these strings to tell the marker what is happening */
 #define FMT_SERVER_INFO "ECE568-CLIENT: %s %s %s\n"
 #define FMT_OUTPUT "ECE568-CLIENT: %s %s\n"
-#define FMT_CN_MISMATCH "ECE568-CLIENT: Server Common Name doesn't match\n"
-#define FMT_EMAIL_MISMATCH "ECE568-CLIENT: Server Email doesn't match\n"
-#define FMT_NO_VERIFY "ECE568-CLIENT: Certificate does not verify\n"
-#define FMT_INCORRECT_CLOSE "ECE568-CLIENT: Premature close\n"
+#define FMT_CN_MISMATCH "Server Common Name doesn't match"
+#define FMT_EMAIL_MISMATCH "Server Email doesn't match"
+#define FMT_NO_VERIFY "Certificate does not verify"
+#define FMT_INCORRECT_CLOSE "Premature close"
 #define KEYFILE "alice.pem"
 #define PASSWORD "password"
 #define CA_LIST "568ca.pem"
@@ -30,7 +36,7 @@
 
 BIO *bio_err=0;
 static char *pass;
-const char *allowedCiphers = "SHA1+kRSA";
+const char *allowedCiphers = "SHA1";
 
 static int password_cb(char *buf,int num,
   int rwflag,void *userdata)
@@ -72,7 +78,7 @@ void check_cert(SSL *ssl)
   char issuer[256];
 
   if(SSL_get_verify_result(ssl)!=X509_V_OK)
-    berr_exit("Certificate does not verify");
+    berr_exit(FMT_NO_VERIFY);
 
   /*Check the common name*/
   peer=SSL_get_peer_certificate(ssl);
@@ -88,11 +94,11 @@ void check_cert(SSL *ssl)
 
   if(strcasecmp(peer_CN,COMMON_NAME)) {
     err_exit
-      ("Server Common Name doesn't match");
+      (FMT_CN_MISMATCH);
   }
   if(strcasecmp(peer_email_address,EMAIL_ADDRESS)) {
     err_exit
-      ("Server Email doesn't match");
+      (FMT_EMAIL_MISMATCH);
   }
 
   // Certificate is valid
@@ -164,7 +170,7 @@ void shutdown_client(SSL* ssl) {
     case 0:
     case -1:
     default:
-      berr_exit("Premature close");
+      berr_exit(FMT_INCORRECT_CLOSE);
   }
 }
 
@@ -253,7 +259,7 @@ int main(int argc, char **argv)
     case SSL_ERROR_ZERO_RETURN:
       break;
     case SSL_ERROR_SYSCALL:
-      err_exit("Premature close");
+      err_exit(FMT_INCORRECT_CLOSE);
     default:
       berr_exit("SSL read problem");
   }

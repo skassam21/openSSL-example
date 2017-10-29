@@ -1,3 +1,9 @@
+/* A SSL server that answers the secret question from the client
+
+   Author: Shums Kassam
+   Sources: http://www.linuxjournal.com/article/4822
+*/
+
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
@@ -14,18 +20,17 @@
 
 #define PORT 8765
 
-/* use these strings to tell the marker what is happening */
 #define FMT_ACCEPT_ERR "ECE568-SERVER: SSL accept error\n"
 #define FMT_CLIENT_INFO "ECE568-SERVER: %s %s\n"
 #define FMT_OUTPUT "ECE568-SERVER: %s %s\n"
-#define FMT_INCOMPLETE_CLOSE "ECE568-SERVER: Incomplete shutdown\n"
+#define FMT_INCOMPLETE_CLOSE "Incomplete shutdown"
 #define KEYFILE "bob.pem"
 #define PASSWORD "password"
 #define CA_LIST "568ca.pem"
 
-BIO *bio_err=0;
+BIO *bio_err = 0;
 static char *pass;
-const char *allowedCiphers = "SHA1+kRSA";
+const char *allowedCiphers = "ALL";
 
 static int password_cb(char *buf,int num,
   int rwflag,void *userdata)
@@ -102,6 +107,7 @@ SSL_CTX *initialize_ctx(char *keyfile, char* password)
     /* Create our context*/
     meth=SSLv23_server_method();
     ctx=SSL_CTX_new(meth);
+    SSL_CTX_set_cipher_list(ctx, allowedCiphers);
 
     /* Load our keys and certificates*/
     if(!(SSL_CTX_use_certificate_chain_file(ctx,
@@ -150,7 +156,7 @@ void shutdown_server(SSL* ssl, int s) {
     case 0:
     case -1:
     default:
-      berr_exit("Incomplete shutdown");
+      berr_exit(FMT_INCOMPLETE_CLOSE);
   }
 }
 
@@ -260,7 +266,7 @@ int main(int argc, char **argv)
         case SSL_ERROR_ZERO_RETURN:
           break;
         case SSL_ERROR_SYSCALL:
-          err_exit("Incomplete shutdown");
+          err_exit(FMT_INCOMPLETE_CLOSE);
         default:
           berr_exit("SSL read problem");
       }
