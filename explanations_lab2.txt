@@ -1,0 +1,19 @@
+#Shums Kassam, 998816713, skassam21@gmail.com
+
+Client:
+The first step in the client is to initialize the SSL context. The context is set to use only SSLv3 or TLSv1, and to use the SHA1 cipher. The last step in the initialization phase is the load the client's certificate, private key, and the certificate of the certificate authority (CA). 
+
+After initializing, the client opens a socket to the server and then connects the SSL socket. If there is a connection error, the client prints out the errors using ERR_print_errors.
+
+If the handshake is successful, the client checks the server certificate. It prints out error messages if the certificate is invalid, or the common name or email address are incorrect.
+
+After checking the certificate, the client uses the SSL channel to write the secret question and read the server's result.
+
+Lastly, the client will shutdown by calling SSL_shutdown twice. The first call sends the "close notify" alert to protect against a truncation attack. Then, SSL_shutdown is called again to complete the shutdown handshake.
+
+Server:
+The server also starts by initializing the SSL context. The context is set up to use SSLv2, SSLv3, and TLSv1. The cipher list is set to use ALL.
+
+After initialization, the server listens to the socket, and will accept any incoming connections. Upon accepting a connection, it'll fork a child process to handle the connection. In the child process, the server accepts the SSL connection, and prints an error message if the acception fails.
+
+The server will then verify the client's certificate, and print out its common name and email address if valid. Then the server will read the secret question and write the answer using the SSL channel. Lastly, the server will shutdown its child process using the same method as the client.
